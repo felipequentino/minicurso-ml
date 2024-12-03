@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Previsão de Churn</title>
+</head>
+<body>
+	<h1>Prever Churn de Cliente</h1>
+	<form action="/predict" method="post">
+    	<label for="tenure">Tenure:</label>
+    	<input type="text" name="tenure" id="tenure"><br><br>
+    	<label for="MonthlyCharges">Monthly Charges:</label>
+    	<input type="text" name="MonthlyCharges" id="MonthlyCharges"><br><br>
+    	<label for="TotalCharges">Total Charges:</label>
+    	<input type="text" name="TotalCharges" id="TotalCharges"><br><br>
+    	<!-- Adicionar outros campos necessários -->
+    	<input type="submit" value="Prever">
+	</form>
+	<br>
+	<h2>{{ prediction_text }}</h2>
+</body>
+</html>
