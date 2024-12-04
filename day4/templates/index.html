@@ -1,21 +1,250 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Previsão de Churn</title>
+    <meta charset="UTF-8">
+    <title>Previsão de Churn</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        form {
+            max-width: 800px;
+            margin: auto;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-section h3 {
+            margin-top: 0;
+        }
+        label {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #004999;
+        }
+        .prediction {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1.5em;
+            color: #006600;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-	<h1>Prever Churn de Cliente</h1>
-	<form action="/predict" method="post">
-    	<label for="tenure">Tenure:</label>
-    	<input type="text" name="tenure" id="tenure"><br><br>
-    	<label for="MonthlyCharges">Monthly Charges:</label>
-    	<input type="text" name="MonthlyCharges" id="MonthlyCharges"><br><br>
-    	<label for="TotalCharges">Total Charges:</label>
-    	<input type="text" name="TotalCharges" id="TotalCharges"><br><br>
-    	<!-- Adicionar outros campos necessários -->
-    	<input type="submit" value="Prever">
-	</form>
-	<br>
-	<h2>{{ prediction_text }}</h2>
+    <h1>Prever Churn de Cliente</h1>
+    <form action="/predict" method="post">
+        <!-- Campos Numéricos -->
+        <div class="form-section">
+            <h3>Informações do Cliente</h3>
+            <label for="tenure">Tenure (meses):</label>
+            <input type="number" name="tenure" id="tenure" min="0" required><br><br>
+
+            <label for="MonthlyCharges">Monthly Charges:</label>
+            <input type="number" step="0.01" name="MonthlyCharges" id="MonthlyCharges" min="0" required><br><br>
+
+            <label for="TotalCharges">Total Charges:</label>
+            <input type="number" step="0.01" name="TotalCharges" id="TotalCharges" min="0" required><br><br>
+        </div>
+		<!-- Senior Citizen -->
+		<div class="form-section">
+			<h3>Cidadão Idoso</h3>
+			<input type="radio" id="SeniorCitizen_No" name="SeniorCitizen" value="SeniorCitizen_No" required>
+			<label for="SeniorCitizen_No">Não</label><br>
+			<input type="radio" id="SeniorCitizen_Yes" name="SeniorCitizen" value="SeniorCitizen_Yes">
+			<label for="SeniorCitizen_Yes">Sim</label><br>
+		</div>
+        <!-- Gênero -->
+        <div class="form-section">
+            <h3>Gênero</h3>
+            <input type="radio" id="gender_Female" name="gender" value="gender_Female" required>
+            <label for="gender_Female">Feminino</label><br>
+            <input type="radio" id="gender_Male" name="gender" value="gender_Male">
+            <label for="gender_Male">Masculino</label><br>
+        </div>
+
+        <!-- Parceiro -->
+        <div class="form-section">
+            <h3>Parceiro</h3>
+            <input type="radio" id="Partner_No" name="Partner" value="Partner_No" required>
+            <label for="Partner_No">Não</label><br>
+            <input type="radio" id="Partner_Yes" name="Partner" value="Partner_Yes">
+            <label for="Partner_Yes">Sim</label><br>
+        </div>
+
+        <!-- Dependentes -->
+        <div class="form-section">
+            <h3>Dependentes</h3>
+            <input type="radio" id="Dependents_No" name="Dependents" value="Dependents_No" required>
+            <label for="Dependents_No">Não</label><br>
+            <input type="radio" id="Dependents_Yes" name="Dependents" value="Dependents_Yes">
+            <label for="Dependents_Yes">Sim</label><br>
+        </div>
+
+        <!-- Phone Service -->
+        <div class="form-section">
+            <h3>Serviço de Telefone</h3>
+            <input type="radio" id="PhoneService_No" name="PhoneService" value="PhoneService_No" required>
+            <label for="PhoneService_No">Não</label><br>
+            <input type="radio" id="PhoneService_Yes" name="PhoneService" value="PhoneService_Yes">
+            <label for="PhoneService_Yes">Sim</label><br>
+        </div>
+
+        <!-- Multiple Lines -->
+        <div class="form-section">
+            <h3>Múltiplas Linhas</h3>
+            <input type="radio" id="MultipleLines_No" name="MultipleLines" value="MultipleLines_No" required>
+            <label for="MultipleLines_No">Não</label><br>
+            <input type="radio" id="MultipleLines_No_phone_service" name="MultipleLines" value="MultipleLines_No phone service">
+            <label for="MultipleLines_No_phone_service">Sem Serviço de Telefone</label><br>
+            <input type="radio" id="MultipleLines_Yes" name="MultipleLines" value="MultipleLines_Yes">
+            <label for="MultipleLines_Yes">Sim</label><br>
+        </div>
+
+        <!-- Internet Service -->
+        <div class="form-section">
+            <h3>Serviço de Internet</h3>
+            <input type="radio" id="InternetService_DSL" name="InternetService" value="InternetService_DSL" required>
+            <label for="InternetService_DSL">DSL</label><br>
+            <input type="radio" id="InternetService_Fiber optic" name="InternetService" value="InternetService_Fiber optic">
+            <label for="InternetService_Fiber optic">Fiber Optic</label><br>
+            <input type="radio" id="InternetService_No" name="InternetService" value="InternetService_No">
+            <label for="InternetService_No">Sem Serviço de Internet</label><br>
+        </div>
+
+        <!-- Online Security -->
+        <div class="form-section">
+            <h3>Segurança Online</h3>
+            <input type="radio" id="OnlineSecurity_No" name="OnlineSecurity" value="OnlineSecurity_No" required>
+            <label for="OnlineSecurity_No">Não</label><br>
+            <input type="radio" id="OnlineSecurity_No_internet_service" name="OnlineSecurity" value="OnlineSecurity_No internet service">
+            <label for="OnlineSecurity_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="OnlineSecurity_Yes" name="OnlineSecurity" value="OnlineSecurity_Yes">
+            <label for="OnlineSecurity_Yes">Sim</label><br>
+        </div>
+
+        <!-- Online Backup -->
+        <div class="form-section">
+            <h3>Backup Online</h3>
+            <input type="radio" id="OnlineBackup_No" name="OnlineBackup" value="OnlineBackup_No" required>
+            <label for="OnlineBackup_No">Não</label><br>
+            <input type="radio" id="OnlineBackup_No_internet_service" name="OnlineBackup" value="OnlineBackup_No internet service">
+            <label for="OnlineBackup_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="OnlineBackup_Yes" name="OnlineBackup" value="OnlineBackup_Yes">
+            <label for="OnlineBackup_Yes">Sim</label><br>
+        </div>
+
+        <!-- Device Protection -->
+        <div class="form-section">
+            <h3>Proteção de Dispositivo</h3>
+            <input type="radio" id="DeviceProtection_No" name="DeviceProtection" value="DeviceProtection_No" required>
+            <label for="DeviceProtection_No">Não</label><br>
+            <input type="radio" id="DeviceProtection_No_internet_service" name="DeviceProtection" value="DeviceProtection_No internet service">
+            <label for="DeviceProtection_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="DeviceProtection_Yes" name="DeviceProtection" value="DeviceProtection_Yes">
+            <label for="DeviceProtection_Yes">Sim</label><br>
+        </div>
+
+        <!-- Tech Support -->
+        <div class="form-section">
+            <h3>Suporte Técnico</h3>
+            <input type="radio" id="TechSupport_No" name="TechSupport" value="TechSupport_No" required>
+            <label for="TechSupport_No">Não</label><br>
+            <input type="radio" id="TechSupport_No_internet_service" name="TechSupport" value="TechSupport_No internet service">
+            <label for="TechSupport_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="TechSupport_Yes" name="TechSupport" value="TechSupport_Yes">
+            <label for="TechSupport_Yes">Sim</label><br>
+        </div>
+
+        <!-- Streaming TV -->
+        <div class="form-section">
+            <h3>Streaming de TV</h3>
+            <input type="radio" id="StreamingTV_No" name="StreamingTV" value="StreamingTV_No" required>
+            <label for="StreamingTV_No">Não</label><br>
+            <input type="radio" id="StreamingTV_No_internet_service" name="StreamingTV" value="StreamingTV_No internet service">
+            <label for="StreamingTV_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="StreamingTV_Yes" name="StreamingTV" value="StreamingTV_Yes">
+            <label for="StreamingTV_Yes">Sim</label><br>
+        </div>
+
+        <!-- Streaming Movies -->
+        <div class="form-section">
+            <h3>Streaming de Filmes</h3>
+            <input type="radio" id="StreamingMovies_No" name="StreamingMovies" value="StreamingMovies_No" required>
+            <label for="StreamingMovies_No">Não</label><br>
+            <input type="radio" id="StreamingMovies_No_internet_service" name="StreamingMovies" value="StreamingMovies_No internet service">
+            <label for="StreamingMovies_No_internet_service">Sem Serviço de Internet</label><br>
+            <input type="radio" id="StreamingMovies_Yes" name="StreamingMovies" value="StreamingMovies_Yes">
+            <label for="StreamingMovies_Yes">Sim</label><br>
+        </div>
+
+        <!-- Contract -->
+        <div class="form-section">
+            <h3>Contrato</h3>
+            <input type="radio" id="Contract_Month-to-month" name="Contract" value="Contract_Month-to-month" required>
+            <label for="Contract_Month-to-month">Mês a Mês</label><br>
+            <input type="radio" id="Contract_One_year" name="Contract" value="Contract_One year">
+            <label for="Contract_One_year">Um Ano</label><br>
+            <input type="radio" id="Contract_Two_year" name="Contract" value="Contract_Two year">
+            <label for="Contract_Two_year">Dois Anos</label><br>
+        </div>
+
+        <!-- Paperless Billing -->
+        <div class="form-section">
+            <h3>Faturamento sem Papel</h3>
+            <input type="radio" id="PaperlessBilling_No" name="PaperlessBilling" value="PaperlessBilling_No" required>
+            <label for="PaperlessBilling_No">Não</label><br>
+            <input type="radio" id="PaperlessBilling_Yes" name="PaperlessBilling" value="PaperlessBilling_Yes">
+            <label for="PaperlessBilling_Yes">Sim</label><br>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="form-section">
+            <h3>Método de Pagamento</h3>
+            <input type="radio" id="PaymentMethod_Bank_transfer" name="PaymentMethod" value="PaymentMethod_Bank transfer (automatic)" required>
+            <label for="PaymentMethod_Bank_transfer">Transferência Bancária (Automática)</label><br>
+            <input type="radio" id="PaymentMethod_Credit_card" name="PaymentMethod" value="PaymentMethod_Credit card (automatic)">
+            <label for="PaymentMethod_Credit_card">Cartão de Crédito (Automática)</label><br>
+            <input type="radio" id="PaymentMethod_Electronic_check" name="PaymentMethod" value="PaymentMethod_Electronic check">
+            <label for="PaymentMethod_Electronic_check">Cheque Eletrônico</label><br>
+            <input type="radio" id="PaymentMethod_Mailed_check" name="PaymentMethod" value="PaymentMethod_Mailed check">
+            <label for="PaymentMethod_Mailed_check">Cheque Enviado pelo Correio</label><br>
+        </div>
+
+        <input type="submit" value="Prever">
+    </form>
+
+    {% if prediction_text %}
+        <div class="prediction">
+            <h2>{{ prediction_text }}</h2>
+        </div>
+    {% endif %}
+
+    {% if error_message %}
+        <div class="error">
+            <h2>{{ error_message }}</h2>
+        </div>
+    {% endif %}
 </body>
 </html>
