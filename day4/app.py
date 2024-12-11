@@ -1,11 +1,11 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, jsonify
 import joblib
 import numpy as np
 
 app = Flask(__name__)
 
 # Carregando o modelo e o scaler
-model = joblib.load('../modelo_churn.pkl')
+model = joblib.load('../best_model_random_forest.pkl')
 scaler = joblib.load('../scaler.pkl')
 
 # Lista completa de colunas que o modelo espera (excluindo 'customerID' e 'Churn')
@@ -30,65 +30,53 @@ model_columns = [
     'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check'
 ]
 
-# Função auxiliar para definir dummies
 def set_dummy(input_data, column_value):
     if column_value in model_columns:
         input_data[column_value] = 1
 
-# Rota principal
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# Rota para predição
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Inicializa um dicionário com todas as colunas como 0
-    input_data = {col: 0 for col in model_columns}
-
-    # Extrai e valida os valores numéricos do formulário
     try:
-        tenure = float(request.form['tenure'])
-        monthly_charges = float(request.form['MonthlyCharges'])
-        total_charges = float(request.form['TotalCharges'])
-    except ValueError:
-        return render_template('index.html', error_message="Por favor, insira valores numéricos válidos.")
+        # Recebe dados JSON
+        data = request.get_json()
 
-    # Prepara os dados numéricos para escalonamento
-    numerical_features = np.array([[tenure, monthly_charges, total_charges]])
-    numerical_features_scaled = scaler.transform(numerical_features)
+        # Inicializa um dicionário com todas as colunas como 0
+        input_data = {col: 0 for col in model_columns}
 
-    # Atualiza as características numéricas escalonadas no dicionário
-    input_data['tenure'] = numerical_features_scaled[0][0]
-    input_data['MonthlyCharges'] = numerical_features_scaled[0][1]
-    input_data['TotalCharges'] = numerical_features_scaled[0][2]
+        # Extrai e valida os valores numéricos
+        try:
+            tenure = float(data['tenure'])
+            monthly_charges = float(data['MonthlyCharges'])
+            total_charges = float(data['TotalCharges'])
+        except ValueError:
+            return jsonify({'error': 'Valores numéricos inválidos'}), 400
 
-    # Define as dummies com base nas seleções do formulário
-    set_dummy(input_data, request.form.get('gender'))
-    set_dummy(input_data, request.form.get('Partner'))
-    set_dummy(input_data, request.form.get('Dependents'))
-    set_dummy(input_data, request.form.get('PhoneService'))
-    set_dummy(input_data, request.form.get('MultipleLines'))
-    set_dummy(input_data, request.form.get('InternetService'))
-    set_dummy(input_data, request.form.get('OnlineSecurity'))
-    set_dummy(input_data, request.form.get('OnlineBackup'))
-    set_dummy(input_data, request.form.get('DeviceProtection'))
-    set_dummy(input_data, request.form.get('TechSupport'))
-    set_dummy(input_data, request.form.get('StreamingTV'))
-    set_dummy(input_data, request.form.get('StreamingMovies'))
-    set_dummy(input_data, request.form.get('Contract'))
-    set_dummy(input_data, request.form.get('PaperlessBilling'))
-    set_dummy(input_data, request.form.get('PaymentMethod'))
+        # Prepara os dados numéricos para escalonamento
+        numerical_features = np.array([[tenure, monthly_charges, total_charges]])
+        numerical_features_scaled = scaler.transform(numerical_features)
 
-    # Converter o dicionário em um array na ordem correta
-    final_features = [input_data[col] for col in model_columns]
-    final_features = np.array([final_features])
+        # Atualiza as características numéricas escalonadas no dicionário
+        input_data['tenure'] = numerical_features_scaled[0][0]
+        input_data['MonthlyCharges'] = numerical_features_scaled[0][1]
+        input_data['TotalCharges'] = numerical_features_scaled[0][2]
 
-    # Realizando a previsão
-    prediction = model.predict(final_features)
+        # Define as dummies com base nas seleções
+        for key, value in data.items():
+            set_dummy(input_data, value)
 
-    output = prediction[0]
-    return render_template('index.html', prediction_text='Previsão de Churn: {}'.format('Sim' if output == 1 else 'Não'))
+        # Converter o dicionário em um array na ordem correta
+        final_features = [input_data[col] for col in model_columns]
+        final_features = np.array([final_features])
+
+        # Realizando a previsão
+        prediction = model.predict(final_features)
+
+        return jsonify({
+            'prediction': int(prediction[0])
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

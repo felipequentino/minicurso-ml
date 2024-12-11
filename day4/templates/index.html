@@ -3,54 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Previsão de Churn</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-        }
-        h1, h2, h3 {
-            color: #333;
-        }
-        form {
-            max-width: 800px;
-            margin: auto;
-        }
-        .form-section {
-            margin-bottom: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .form-section h3 {
-            margin-top: 0;
-        }
-        label {
-            display: inline-block;
-            margin-right: 10px;
-        }
-        input[type="submit"] {
-            padding: 10px 20px;
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #004999;
-        }
-        .prediction {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 1.5em;
-            color: #006600;
-        }
-        .error {
-            color: red;
-            text-align: center;
-            margin-top: 20px;
-        }
-    </style>
 </head>
 <body>
     <h1>Prever Churn de Cliente</h1>
@@ -234,17 +186,34 @@
 
         <input type="submit" value="Prever">
     </form>
+    <div id="result"></div>
 
-    {% if prediction_text %}
-        <div class="prediction">
-            <h2>{{ prediction_text }}</h2>
-        </div>
-    {% endif %}
+    <script>
+        document.getElementById('churnForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Colete todos os dados do formulário
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
 
-    {% if error_message %}
-        <div class="error">
-            <h2>{{ error_message }}</h2>
-        </div>
-    {% endif %}
+            fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `Previsão de Churn: ${result.prediction === 1 ? 'Sim' : 'Não'}`;
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = 'Erro ao realizar previsão';
+            });
+        });
+    </script>
 </body>
 </html>
