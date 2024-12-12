@@ -195,7 +195,7 @@
             // Colete todos os dados do formulário
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData.entries());
-            fetch('http://localhost:5000/predict', {
+            fetch('https://minicurso-ml.onrender.com/predict', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
