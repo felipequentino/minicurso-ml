@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
 import numpy as np
 
 app = Flask(__name__)
+CORS(app)
 
-# Carregando o modelo e o scaler
-model = joblib.load('../best_model_random_forest.pkl')
-scaler = joblib.load('../scaler.pkl')
+# Carregando o modelo e o scaler 
+# model = joblib.load('./models/best_model_random_forest.pkl')
+model = joblib.load('./models/random_forest_model.pkl')
+scaler = joblib.load('./models/scaler.pkl')
 
 # Lista completa de colunas que o modelo espera (excluindo 'customerID' e 'Churn')
 model_columns = [
@@ -34,15 +37,14 @@ def set_dummy(input_data, column_value):
     if column_value in model_columns:
         input_data[column_value] = 1
 
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
         # Recebe dados JSON
         data = request.get_json()
-
         # Inicializa um dicionário com todas as colunas como 0
         input_data = {col: 0 for col in model_columns}
-
         # Extrai e valida os valores numéricos
         try:
             tenure = float(data['tenure'])
@@ -50,16 +52,13 @@ def predict():
             total_charges = float(data['TotalCharges'])
         except ValueError:
             return jsonify({'error': 'Valores numéricos inválidos'}), 400
-
         # Prepara os dados numéricos para escalonamento
         numerical_features = np.array([[tenure, monthly_charges, total_charges]])
         numerical_features_scaled = scaler.transform(numerical_features)
-
         # Atualiza as características numéricas escalonadas no dicionário
         input_data['tenure'] = numerical_features_scaled[0][0]
         input_data['MonthlyCharges'] = numerical_features_scaled[0][1]
         input_data['TotalCharges'] = numerical_features_scaled[0][2]
-
         # Define as dummies com base nas seleções
         for key, value in data.items():
             set_dummy(input_data, value)
